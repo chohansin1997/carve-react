@@ -1,4 +1,5 @@
 import logo from './logo.svg';
+import Caver from 'caver-js';
 import './App.css';
 
 function App() {

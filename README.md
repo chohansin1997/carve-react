@@ -68,3 +68,21 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+
+--------------------------------
+
+## 오류 발생시
+### BREAKING CHANGE: webpack < 5 used to include polyfills for node.js core modules by default
+
+webpack 과 caver 버전 오류로 인한 실행 실패 이다.
+
+터미널에서 
+
+npm uninstall react-scripts
+
+npm i react-scripts@4.0.3
+
+을 실행하여 하위 버전으로 변경시 정상적으로 작동이 가능하다.
+
+참조 https://github.com/ChainSafe/web3.js/issues/4090
