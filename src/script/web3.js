@@ -2,34 +2,33 @@ import Caver from 'caver-js';
 import contractFile from '../contracts/Test.json';
 
 
-
 async function testFunction() {
     //TODO 스마트 컨트렉트 호출하기
 
-    let caver = new Caver('https://api.baobab.klaytn.net:8651/') //클레이튼 노드 주소
-    let contractAddress = "0x1C87994143fAFa02ed101B49a3557c7B9C285D0C"; //스마트 컨트렉트 주소
-
-    const accountAddress = '0xdd70DF04e05606a9DacF4D8CdE4F5Cf0cfe649A1'; //지갑 주소
-    const accountPrivatekey = '0x2612ecddb6e43526b909feaedcdb28ec62d81234fc4f2fd90073697522dfff7b'; //지갑 개인키
-    const deployerKeyring = caver.wallet.keyring.create(accountAddress, accountPrivatekey); //키링 생성
-
-    caver.wallet.add(deployerKeyring); //지갑 셋팅
-
-    const contractInstance = caver.contract.create(contractFile.abi, contractAddress); //컨트렉트 매니저 객체 생성
-
-    console.log(contractInstance);
-    console.log(contractInstance.options.address);
-
-    //스마트 컨트렉트 호출                             호출 하고 싶은 메서드
-    const result = await contractInstance.methods.getName().call();
-
-    console.log(result);                                     //메소드에 파라메터를 담아 던짐
-    const callResult2 = await contractInstance.methods.setName("testt113").call(); //파라메터를 잘 받고 호출도 잘되지만 트랜잭션 비용(가스)을 지불하지 않았기때문에 데이터 수정은 안일어남
-    console.log("트랜잭션 가스를 지불하지 않은 수정 메소드  : " + callResult2);
-    const callResult3 = await contractInstance.methods.setName("testt113").send({from: deployerKeyring.address,gas: 4000000});
-    console.log("최초 호출 값 : " + result);
-    console.log("트랜잭션 비용을 지불해서 수정 호출");
-    console.log("변경 후 호출 값 : " + await contractInstance.methods.getName().call());
+    // let caver = new Caver('https://api.baobab.klaytn.net:8651/') //클레이튼 노드 주소
+    // let contractAddress = "0x1C87994143fAFa02ed101B49a3557c7B9C285D0C"; //스마트 컨트렉트 주소
+    //
+    // const accountAddress = '0xdd70DF04e05606a9DacF4D8CdE4F5Cf0cfe649A1'; //지갑 주소
+    // const accountPrivatekey = '0x2612ecddb6e43526b909feaedcdb28ec62d81234fc4f2fd90073697522dfff7b'; //지갑 개인키
+    // const deployerKeyring = caver.wallet.keyring.create(accountAddress, accountPrivatekey); //키링 생성
+    //
+    // caver.wallet.add(deployerKeyring); //지갑 셋팅
+    //
+    // const contractInstance = caver.contract.create(contractFile.abi, contractAddress); //컨트렉트 매니저 객체 생성
+    //
+    // console.log(contractInstance);
+    // console.log(contractInstance.options.address);
+    //
+    // //스마트 컨트렉트 호출                             호출 하고 싶은 메서드
+    // const result = await contractInstance.methods.getName().call();
+    //
+    // console.log(result);                                     //메소드에 파라메터를 담아 던짐
+    // const callResult2 = await contractInstance.methods.setName("testt113").call(); //파라메터를 잘 받고 호출도 잘되지만 트랜잭션 비용(가스)을 지불하지 않았기때문에 데이터 수정은 안 일어남
+    // console.log("트랜잭션 가스를 지불하지 않은 수정 메소드  : " + callResult2);
+    // const callResult3 = await contractInstance.methods.setName("testt113").send({from: deployerKeyring.address,gas: 4000000});
+    // console.log("최초 호출 값 : " + result);
+    // console.log("트랜잭션 비용을 지불해서 수정 호출");
+    // console.log("변경 후 호출 값 : " + await contractInstance.methods.getName().call());
 
 
     // //TODO 클레이 전송
@@ -83,6 +82,63 @@ async function testFunction() {
     // const callResult2 = await contract.methods.setName("testt113").send({from: deployerKeyring.address,gas: 4000000});
     // console.log("이후 호출 값:" + await contract.methods.getName().call());
 
+    //TODO 카이카스 지갑을 통한 web3 연동 후 배포하기.
+
+
+    const klaytn = window.klaytn; //크롬에 깔린 카이카스 확장프로그램 안에는 klaytn 이 내장되어있다.
+    const accounts = await klaytn.enable(); //카이카스 로그인
+
+    const user = {
+        connected: false,
+        address: '',
+        chainId: 0
+    };
+
+    console.log(accounts);
+
+    if (accounts.length >= 1) {
+        user.connected = true;
+        user.address = accounts[0];
+        user.chainId = klaytn.networkVersion;
+    }
+    console.log(user);
+
+    const byteCode = contractFile.bytecode;
+    const abi = contractFile.abi;
+
+    const contract = new window.caver.klay.Contract(abi);
+
+    const deployer = contract.deploy({ //배포할 객체
+        data: byteCode,
+        arguments: ["test", "test1"],
+    });
+
+    const gas = await deployer.estimateGas(); //예상 가스 계산
+
+    const deployed = await deployer.send({ //배포
+        from: klaytn.selectedAddress,
+        gas: gas,
+        value: 0,
+    });
+
+    const contractAddress = deployed.options.address; //배포한 스마트 컨트랙트 주소
+
+    const callResult = await deployed.methods.getName().call(); //배포한 스마트 컨트랙드 호출
+    console.log(callResult);
+    const estimateGas = await deployed.methods.setName("erssdfa023211222").estimateGas({from: klaytn.selectedAddress}); //예상 가스비
+
+    const callResult2 = await deployed.methods.setName("erssdfa023211222").send({
+            from: klaytn.selectedAddress,
+            gas: estimateGas,
+            value: 0
+        }
+        , function (error, transactionHash) {
+            console.log(error)
+        });
+
+
+    alert(callResult2); //수정 값 확인
+    alert(await deployed.methods.getName().call()); //다시 재호출
 }
 
 document.addEventListener("DOMContentLoaded", function () {
